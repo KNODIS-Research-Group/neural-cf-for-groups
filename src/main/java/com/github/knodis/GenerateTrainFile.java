@@ -41,5 +41,7 @@ public class GenerateTrainFile {
         }
 
         csvPrinter.close();
+
+        System.out.println("File " + file.toString() + " generated successfully.");
     }
 }
