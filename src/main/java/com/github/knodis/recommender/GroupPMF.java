@@ -1,17 +1,19 @@
 package com.github.knodis.recommender;
 
+import com.github.knodis.data.GroupManager;
+import com.github.knodis.data.Sample;
 import com.github.knodis.etc.Config;
 import es.upm.etsisi.cf4j.data.BenchmarkDataModels;
 import es.upm.etsisi.cf4j.data.DataModel;
+import es.upm.etsisi.cf4j.data.TestUser;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
+import es.upm.etsisi.cf4j.util.Maths;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.Reader;
+import java.util.Iterator;
 
 public class GroupPMF {
 
@@ -22,10 +24,12 @@ public class GroupPMF {
             datamodel = BenchmarkDataModels.MovieLens1M();
         }
 
-        PMF pmf = new PMF(datamodel, 8,10, Config.RANDOM_SEED);
+        PMF pmf = new PMF(datamodel, 8,50, 0.045, 0.01, Config.RANDOM_SEED);
         pmf.fit();
 
         int groupSize = 2;
+
+        GroupManager groupManager = new GroupManager(datamodel, groupSize);
 
         File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-pred-pmf.csv");
 
@@ -35,30 +39,27 @@ public class GroupPMF {
         String[] headers = {"pmf-pred"};
         CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
 
-        Reader in = new FileReader("data/" + Config.DB_NAME + "/groups-" + groupSize + ".csv");
-        Iterable<CSVRecord> records = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
+        Iterator<Sample> iterator = groupManager.getSamplesIterator();
+        while (iterator.hasNext()) {
+            Sample sample = iterator.next();
 
-        for (CSVRecord record : records) {
-            String itemId = record.get("item");
-            int itemIndex = datamodel.findItemIndex(itemId);
+            int itemIndex = sample.getTestItem().getItemIndex();
+            double[] itemFactors = pmf.getItemFactors(itemIndex);
 
-            double sumPred = 0;
-
-            for (int u = 1; u <= groupSize; u++) {
-                String userId = record.get("user-" + u);
-                int userIndex = datamodel.findUserIndex(userId);
-
-                double pred = pmf.predict(userIndex, itemIndex);
-                sumPred += pred;
+            double[] groupFactors = new double[pmf.getNumFactors()];
+            for (TestUser testUser : sample.getGroup()) {
+                int userIndex = testUser.getUserIndex();
+                double[] userFactors = pmf.getUserFactors(userIndex);
+                for (int f = 0; f < pmf.getNumFactors(); f++) {
+                    groupFactors[f] += userFactors[f] / groupSize;
+                }
             }
 
-            double groupPred = sumPred / 2;
-
-            csvPrinter.print(groupPred);
+            double pred = Maths.dotProduct(groupFactors, itemFactors);
+            csvPrinter.print(pred);
             csvPrinter.println();
         }
 
-        in.close();
         csvPrinter.close();
     }
 }
