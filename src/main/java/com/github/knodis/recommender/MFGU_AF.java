@@ -6,6 +6,7 @@ import com.github.knodis.etc.Config;
 import es.upm.etsisi.cf4j.data.BenchmarkDataModels;
 import es.upm.etsisi.cf4j.data.DataModel;
 import es.upm.etsisi.cf4j.data.TestUser;
+import es.upm.etsisi.cf4j.recommender.matrixFactorization.BiasedMF;
 import es.upm.etsisi.cf4j.recommender.matrixFactorization.PMF;
 import es.upm.etsisi.cf4j.util.Maths;
 import org.apache.commons.csv.CSVFormat;
@@ -15,7 +16,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Iterator;
 
-public class GroupPMF {
+public class MFGU_AF {
 
     public static void main (String[] args) throws Exception {
         DataModel datamodel = null;
@@ -24,19 +25,19 @@ public class GroupPMF {
             datamodel = BenchmarkDataModels.MovieLens1M();
         }
 
-        PMF pmf = new PMF(datamodel, 8,50, 0.045, 0.01, Config.RANDOM_SEED);
-        pmf.fit();
+        BiasedMF biasedMF = new BiasedMF(datamodel, 6,50, 0.05, 0.01, Config.RANDOM_SEED);
+        biasedMF.fit();
 
         int groupSize = 2;
 
         GroupManager groupManager = new GroupManager(datamodel, groupSize);
 
-        File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-pred-pmf.csv");
+        File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-pred-mfgu_af.csv");
 
         File parent = file.getAbsoluteFile().getParentFile();
         parent.mkdirs();
 
-        String[] headers = {"pmf-pred"};
+        String[] headers = {"mfgu_af-pred"};
         CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
 
         Iterator<Sample> iterator = groupManager.getSamplesIterator();
@@ -44,18 +45,26 @@ public class GroupPMF {
             Sample sample = iterator.next();
 
             int itemIndex = sample.getTestItem().getItemIndex();
-            double[] itemFactors = pmf.getItemFactors(itemIndex);
 
-            double[] groupFactors = new double[pmf.getNumFactors()];
+            double[] itemFactors = biasedMF.getItemFactors(itemIndex);
+            double itemBias = biasedMF.getItemBias(itemIndex);
+
+            double[] groupFactors = new double[biasedMF.getNumFactors()];
+            double groupBias = 0;
+
             for (TestUser testUser : sample.getGroup()) {
                 int userIndex = testUser.getUserIndex();
-                double[] userFactors = pmf.getUserFactors(userIndex);
-                for (int f = 0; f < pmf.getNumFactors(); f++) {
+
+                double[] userFactors = biasedMF.getUserFactors(userIndex);
+                double userBias = biasedMF.getUserBias(userIndex);
+
+                for (int f = 0; f < biasedMF.getNumFactors(); f++) {
                     groupFactors[f] += userFactors[f] / groupSize;
+                    groupBias += userBias / groupSize;
                 }
             }
 
-            double pred = Maths.dotProduct(groupFactors, itemFactors);
+            double pred = datamodel.getRatingAverage() + groupBias + itemBias + Maths.dotProduct(groupFactors, itemFactors);
             csvPrinter.print(pred);
             csvPrinter.println();
         }
