@@ -60,7 +60,7 @@ public class SampleGroups {
                     group.add(testUserIndex);
                 }
 
-                boolean isValidGroup = false;
+                int groupRatingsCount = 0;
 
                 for (int testUserIndex : group) {
                     TestUser testUser = datamodel.getTestUser(testUserIndex);
@@ -72,10 +72,11 @@ public class SampleGroups {
                     } else {
                         double rating = testUser.getTestRatingAt(pos);
                         record.add(Double.toString(rating));
-                        isValidGroup = true;
+                        groupRatingsCount++;
                     }
                 }
 
+                boolean isValidGroup = groupRatingsCount > groupSize / 2.0;
                 if (isValidGroup) {
                     csvPrinter.printRecord(record);
                     samples++;
