@@ -52,7 +52,7 @@ public class SampleGroups {
                 int testItemIndex = rand.nextInt(datamodel.getNumberOfTestItems());
                 TestItem testItem = datamodel.getTestItem(testItemIndex);
 
-                record.add(testItem.getId());
+                record.add(Integer.toString(testItem.getItemIndex()));
 
                 Set<Integer> group = new HashSet<>();
                 while (group.size() < groupSize) {
@@ -64,7 +64,7 @@ public class SampleGroups {
 
                 for (int testUserIndex : group) {
                     TestUser testUser = datamodel.getTestUser(testUserIndex);
-                    record.add(testUser.getId());
+                    record.add(Integer.toString(testUser.getUserIndex()));
 
                     int pos = testUser.findTestItem(testItemIndex);
                     if (pos == -1) {

@@ -28,7 +28,7 @@ public class MFGU_AF {
         BiasedMF biasedMF = new BiasedMF(datamodel, 6,50, 0.05, 0.01, Config.RANDOM_SEED);
         biasedMF.fit();
 
-        int groupSize = 2;
+        int groupSize = 4;
 
         GroupManager groupManager = new GroupManager(datamodel, groupSize);
 

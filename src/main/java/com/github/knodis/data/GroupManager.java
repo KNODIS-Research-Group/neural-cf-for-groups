@@ -12,7 +12,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class GroupManager {
 
@@ -33,16 +32,14 @@ public class GroupManager {
         Iterable<CSVRecord> records = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
 
         for (CSVRecord record : records) {
-            String itemId = record.get("item");
-            int testItemIndex = this.datamodel.findTestItemIndex(itemId);
-            TestItem testItem = this.datamodel.getTestItem(testItemIndex);
+            int itemIndex = Integer.parseInt(record.get("item"));
+            TestItem testItem = (TestItem) this.datamodel.getItem(itemIndex);
 
             Sample sample = new Sample(testItem);
 
             for (int u = 1; u <= this.groupSize; u++) {
-                String userId = record.get("user-" + u);
-                int testUserIndex = this.datamodel.findTestUserIndex(userId);
-                TestUser testUser = this.datamodel.getTestUser(testUserIndex);
+                int userIndex = Integer.parseInt(record.get("user-" + u));
+                TestUser testUser = (TestUser) this.datamodel.getUser(userIndex);
                 sample.addTestUser(testUser);
             }
 
