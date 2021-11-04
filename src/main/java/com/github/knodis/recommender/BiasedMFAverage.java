@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Iterator;
 
-public class AverageBiasedMFPrediction {
+public class BiasedMFAverage {
 
     public static void main (String[] args) throws Exception {
         DataModel datamodel = null;
