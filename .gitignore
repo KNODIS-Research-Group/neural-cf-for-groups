@@ -10,6 +10,7 @@
 
 # Mac
 .DS_Store
+src/.DS_Store
 
 # Maven
 log/
