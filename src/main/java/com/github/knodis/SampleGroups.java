@@ -25,6 +25,10 @@ public class SampleGroups {
 
         if (Config.DB_NAME.equals("ml1m")) {
             datamodel = BenchmarkDataModels.MovieLens1M();
+        } else if (Config.DB_NAME.equals("ft")) {
+            datamodel = BenchmarkDataModels.FilmTrust();
+        } else if (Config.DB_NAME.equals("anime")) {
+            datamodel = BenchmarkDataModels.MyAnimeList();
         }
 
         for (int groupSize : GROUP_SIZES) {
