@@ -17,6 +17,8 @@ import java.util.Iterator;
 
 public class BiasedMFAverage {
 
+    private final static int[] GROUP_SIZES = {2, 3, 4, 5, 6, 7, 8, 9, 10};
+
     public static void main (String[] args) throws Exception {
         DataModel datamodel = null;
 
@@ -27,35 +29,37 @@ public class BiasedMFAverage {
         BiasedMF biasedMF = new BiasedMF(datamodel, 6,50, 0.05, 0.01, Config.RANDOM_SEED);
         biasedMF.fit();
 
-        int groupSize = 4;
+        for (int groupSize : GROUP_SIZES) {
+            System.out.println("\nProcessing groups of size " + groupSize);
 
-        GroupManager groupManager = new GroupManager(datamodel, groupSize);
+            GroupManager groupManager = new GroupManager(datamodel, groupSize);
 
-        File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-biasedmf-avg.csv");
+            File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-biasedmf-avg.csv");
 
-        File parent = file.getAbsoluteFile().getParentFile();
-        parent.mkdirs();
+            File parent = file.getAbsoluteFile().getParentFile();
+            parent.mkdirs();
 
-        String[] headers = {"biasedmf-avg"};
-        CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
+            String[] headers = {"biasedmf-avg"};
+            CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
 
-        Iterator<Sample> iterator = groupManager.getSamplesIterator();
-        while (iterator.hasNext()) {
-            Sample sample = iterator.next();
+            Iterator<Sample> iterator = groupManager.getSamplesIterator();
+            while (iterator.hasNext()) {
+                Sample sample = iterator.next();
 
-            int itemIndex = sample.getTestItem().getItemIndex();
+                int itemIndex = sample.getTestItem().getItemIndex();
 
-            double prediction = 0;
+                double prediction = 0;
 
-            for (TestUser testUser : sample.getGroup()) {
-                int userIndex = testUser.getUserIndex();
-                prediction += biasedMF.predict(userIndex, itemIndex) / groupSize;
+                for (TestUser testUser : sample.getGroup()) {
+                    int userIndex = testUser.getUserIndex();
+                    prediction += biasedMF.predict(userIndex, itemIndex) / groupSize;
+                }
+
+                csvPrinter.print(prediction);
+                csvPrinter.println();
             }
 
-            csvPrinter.print(prediction);
-            csvPrinter.println();
+            csvPrinter.close();
         }
-
-        csvPrinter.close();
     }
 }

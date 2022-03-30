@@ -22,6 +22,8 @@ import java.util.Set;
 
 public class MFGU_BF {
 
+    private final static int[] GROUP_SIZES = {2, 3, 4, 5, 6, 7, 8, 9, 10};
+
     public static void main (String[] args) throws Exception {
         DataModel datamodel = null;
 
@@ -32,80 +34,82 @@ public class MFGU_BF {
         BiasedMF biasedMF = new BiasedMF(datamodel, 6,50, 0.05, 0.01, Config.RANDOM_SEED);
         biasedMF.fit();
 
-        int groupSize = 4;
+        for (int groupSize : GROUP_SIZES) {
+            System.out.println("\nProcessing groups of size " + groupSize);
 
-        GroupManager groupManager = new GroupManager(datamodel, groupSize);
+            GroupManager groupManager = new GroupManager(datamodel, groupSize);
 
-        File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-pred-mfgu_bf.csv");
+            File file = new File("data/" + Config.DB_NAME + "/groups-" + groupSize + "-pred-mfgu_bf.csv");
 
-        File parent = file.getAbsoluteFile().getParentFile();
-        parent.mkdirs();
+            File parent = file.getAbsoluteFile().getParentFile();
+            parent.mkdirs();
 
-        String[] headers = {"mfgu_bf-pred"};
-        CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
+            String[] headers = {"mfgu_bf-pred"};
+            CSVPrinter csvPrinter = new CSVPrinter(new FileWriter(file), CSVFormat.DEFAULT.withHeader(headers));
 
-        Iterator<Sample> iterator = groupManager.getSamplesIterator();
-        while (iterator.hasNext()) {
-            Sample sample = iterator.next();
+            Iterator<Sample> iterator = groupManager.getSamplesIterator();
+            while (iterator.hasNext()) {
+                Sample sample = iterator.next();
 
-            int itemIndex = sample.getTestItem().getItemIndex();
-            Set<TestUser> group = sample.getGroup();
+                int itemIndex = sample.getTestItem().getItemIndex();
+                Set<TestUser> group = sample.getGroup();
 
-            List<Integer> groupItems = commonRatings(datamodel, group);
+                List<Integer> groupItems = commonRatings(datamodel, group);
 
-            SimpleMatrix S = new SimpleMatrix(groupItems.size(), 1);
-            for (int i = 0; i < groupItems.size(); i++) {
-                double sum = 0;
-                int count = 0;
+                SimpleMatrix S = new SimpleMatrix(groupItems.size(), 1);
+                for (int i = 0; i < groupItems.size(); i++) {
+                    double sum = 0;
+                    int count = 0;
 
-                for (TestUser testUser : group) {
-                   int pos = testUser.findItem(groupItems.get(i));
-                   if (pos != -1) {
-                       sum += testUser.getRatingAt(pos);
-                       count++;
-                   }
+                    for (TestUser testUser : group) {
+                        int pos = testUser.findItem(groupItems.get(i));
+                        if (pos != -1) {
+                            sum += testUser.getRatingAt(pos);
+                            count++;
+                        }
+                    }
+
+                    double s = sum / count - datamodel.getRatingAverage() - biasedMF.getItemBias(groupItems.get(i));
+                    S.set(i, 0, s);
                 }
 
-                double s = sum / count - datamodel.getRatingAverage() - biasedMF.getItemBias(groupItems.get(i));
-                S.set(i, 0, s);
-            }
 
+                SimpleMatrix A = new SimpleMatrix(groupItems.size(), biasedMF.getNumFactors() + 1);
 
-            SimpleMatrix A = new SimpleMatrix(groupItems.size(), biasedMF.getNumFactors() + 1);
+                A.setColumn(A.numCols() - 1, 0, 1);
 
-            A.setColumn(A.numCols() - 1, 0, 1);
+                for (int i = 0; i < groupItems.size(); i++) {
+                    double[] factors = biasedMF.getItemFactors(groupItems.get(i));
+                    for (int f = 0; f < biasedMF.getNumFactors(); f++) {
+                        A.set(i, f, factors[f]);
+                    }
+                }
 
-            for (int i = 0; i < groupItems.size(); i++) {
-                double [] factors = biasedMF.getItemFactors(groupItems.get(i));
+                SimpleMatrix m = A.transpose()
+                        .mult(A)
+                        .plus(SimpleMatrix.identity(biasedMF.getNumFactors() + 1).scale(biasedMF.getLambda()))
+                        .invert()
+                        .mult(A.transpose())
+                        .mult(S);
+
+                double groupBias = m.get(biasedMF.getNumFactors(), 0);
+
+                double[] groupFactors = new double[biasedMF.getNumFactors()];
                 for (int f = 0; f < biasedMF.getNumFactors(); f++) {
-                    A.set(i, f, factors[f]);
+                    groupFactors[f] = m.get(f, 0);
                 }
+
+                double itemBias = biasedMF.getItemBias(itemIndex);
+
+                double[] itemFactors = biasedMF.getItemFactors(itemIndex);
+
+                double pred = datamodel.getRatingAverage() + +groupBias + itemBias + Maths.dotProduct(groupFactors, itemFactors);
+                csvPrinter.print(pred);
+                csvPrinter.println();
             }
 
-            SimpleMatrix m = A.transpose()
-                                .mult(A)
-                                .plus(SimpleMatrix.identity(biasedMF.getNumFactors() + 1).scale(biasedMF.getLambda()))
-                                .invert()
-                                .mult(A.transpose())
-                                .mult(S);
-
-            double groupBias = m.get(biasedMF.getNumFactors(), 0);
-
-            double[] groupFactors = new double[biasedMF.getNumFactors()];
-            for (int f = 0; f < biasedMF.getNumFactors(); f++) {
-                groupFactors[f] = m.get(f, 0);
-            }
-
-            double itemBias = biasedMF.getItemBias(itemIndex);
-
-            double[] itemFactors = biasedMF.getItemFactors(itemIndex);
-
-            double pred = datamodel.getRatingAverage() + + groupBias + itemBias + Maths.dotProduct(groupFactors, itemFactors);
-            csvPrinter.print(pred);
-            csvPrinter.println();
+            csvPrinter.close();
         }
-
-        csvPrinter.close();
     }
 
     private static List<Integer> commonRatings(DataModel datamodel, Set<TestUser> group) {

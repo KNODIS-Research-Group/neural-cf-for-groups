@@ -56,32 +56,26 @@ public class SampleGroups {
                 int testItemIndex = rand.nextInt(datamodel.getNumberOfTestItems());
                 TestItem testItem = datamodel.getTestItem(testItemIndex);
 
-                record.add(Integer.toString(testItem.getItemIndex()));
+                if (testItem.getNumberOfTestRatings() >= groupSize) {
+                    record.add(Integer.toString(testItem.getItemIndex()));
 
-                Set<Integer> group = new HashSet<>();
-                while (group.size() < groupSize) {
-                    int testUserIndex = rand.nextInt(datamodel.getNumberOfTestUsers());
-                    group.add(testUserIndex);
-                }
-
-                int groupRatingsCount = 0;
-
-                for (int testUserIndex : group) {
-                    TestUser testUser = datamodel.getTestUser(testUserIndex);
-                    record.add(Integer.toString(testUser.getUserIndex()));
-
-                    int pos = testUser.findTestItem(testItemIndex);
-                    if (pos == -1) {
-                        record.add("");
-                    } else {
-                        double rating = testUser.getTestRatingAt(pos);
-                        record.add(Double.toString(rating));
-                        groupRatingsCount++;
+                    List<Integer> indexes = new ArrayList<>();
+                    for (int i = 0; i < testItem.getNumberOfTestRatings(); i++) {
+                        indexes.add(i);
                     }
-                }
+                    Collections.shuffle(indexes);
 
-                boolean isValidGroup = groupRatingsCount > groupSize / 2.0;
-                if (isValidGroup) {
+                    for (int i = 0; i < groupSize; i++) {
+                        int pos = indexes.get(i);
+                        int testUserIndex = testItem.getTestUserAt(pos);
+
+                        TestUser testUser = datamodel.getTestUser(testUserIndex);
+                        record.add(Integer.toString(testUser.getUserIndex()));
+
+                        double rating = testItem.getTestRatingAt(pos);
+                        record.add(Double.toString(rating));
+                    }
+
                     csvPrinter.printRecord(record);
                     samples++;
 
