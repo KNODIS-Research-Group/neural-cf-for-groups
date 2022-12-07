@@ -6,16 +6,37 @@ This project contains the following directories:
 
 - `java`: it contains the `ExportTrainTestSplit` class used to download the train/test splits of the datasets provided by CF4J and the `SampleGroups` class used to random generate groups of users.
 - `data`: it cointains the data exported from Java to be used by pyhton. MyAnimeList dataset files are not incluided in the repo due to size limitations. They can be generated using the Java classes within the fixed random seed.
-- `python`:
-  - `rs-data-python`: Datasets processing and transformation
-  - `dnn-cf-groups`: Models and evaluations
+- `python`: it contains all code for training and evaluation of models.
 
-## rs-data-python
+
+## Python layout
+
+```txt
+- data
+  \- dataset1\
+  \- dataset2\
+  ...
+- models
+  \- ... h5
+- notebooks
+  \- researchs in notebooks
+- results
+  \- evaluation result files
+- src
+  \- data
+    \- rs-data-python (lib)
+  \- eval
+  \- models
+  \- train
+  \- utils
+```
+
+### Execution
 
 Please set yout PYTHONPATH variable to include this directory
 
 ```
-PYTHONPATH="/path-to-this-folder/rs-data-python"
+PYTHONPATH="/path-to-this-folder/src/data/rs-data-python"
 export PYTHONPATH
 ```
 
@@ -41,26 +62,24 @@ Ratings: 1 - 5
 ```
 
 
-## dnn-cf-groups
+#### Train
 
-### Train
+Generate models ```.h5``` in ```models``` directory.
 
-To train all models run ```ncf-groups-train-all.py``` with the output dir where models will be saved and the dataset.
-```
-python ncf-groups-train-all.py
-ncf-groups-train-all.py [-h] --outdir OUTDIR --dataset DATASET [--embacti EMBACTI]
-```
-
-Example:
-```
-python ncf-groups-train-all.py --outdir results --dataset data_groups.GroupDataML1M
+```python
+python src/train/train-all.py --dataset ml1m
+python src/train/train-all.py --dataset ft
+python src/train/train-all.py --dataset anime
 ```
 
-### Evaluation
-To evaluate the models with groups information, you need to set up the script variable ```DS``` and run ```ncf-groups-eval-all.sh```
+#### Evaluate
 
-### Results
+Generate results in ```results``` directory.
 
-You can fin the code to generate the results in:
+```python
+python src/eval/eval-agg-individual-model-all.py
+```
 
-``` ncf-groups-graph.ipynb ```
+#### Visualization
+
+See ```notebooks\tables.ipynb``` to generate result tables.
