@@ -156,7 +156,7 @@ for i, ngrp in enumerate(range(fromngroups,tongroups+1)):
     
     
     """
-        Expert
+        Softmax
     """
     softmax_closure = get_activation_softmax(
                         dataset.get_num_users(),
