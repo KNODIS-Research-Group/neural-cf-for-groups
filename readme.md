@@ -1,6 +1,6 @@
 # Recommending items to group of users using Neural Collaborative Filtering
 
-This work has been submitted to Neural Computing & Applications jornal on ######.
+This work has been published in [Neural Computing & Applications](https://www.springer.com/journal/521) jornal on 22 March 2023. The publication can be found in this [link](https://link.springer.com/article/10.1007/s00521-023-08410-6), DOI [10.1007/s00521-023-08410-6](https://doi.org/10.1007/s00521-023-08410-6), and preprint version [here](https://arxiv.org/abs/2303.07001).
 
 This project contains the following directories:
 
@@ -8,6 +8,28 @@ This project contains the following directories:
 - `data`: it cointains the data exported from Java to be used by pyhton. MyAnimeList dataset files are not incluided in the repo due to size limitations. They can be generated using the Java classes within the fixed random seed.
 - `python`: it contains all code for training and evaluation of models.
 
+
+Cite:
+```
+@article{10.1007/s00521-023-08410-6,
+  author = {Due\~{n}as-Ler\'{\i}n, Jorge and Lara-Cabrera, Ra\'{u}l and Ortega, Fernando and Bobadilla, Jes\'{u}s},
+  title = {Neural Group Recommendation Based on a Probabilistic Semantic Aggregation},
+  year = {2023},
+  issue_date = {Jul 2023},
+  publisher = {Springer-Verlag},
+  address = {Berlin, Heidelberg},
+  volume = {35},
+  number = {19},
+  issn = {0941-0643},
+  url = {https://doi.org/10.1007/s00521-023-08410-6},
+  doi = {10.1007/s00521-023-08410-6},
+  journal = {Neural Comput. Appl.},
+  month = {mar},
+  pages = {14081–14092},
+  numpages = {12},
+  keywords = {Deep learning, Group recommender system, Aggregation models, Collaborative filtering}
+}
+```
 
 ## Python layout
 
