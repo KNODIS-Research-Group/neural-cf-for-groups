@@ -62,7 +62,9 @@ PYTHONPATH="/path-to-this-folder/src/data/rs-data-python"
 export PYTHONPATH
 ```
 
-Then you can import all datasets
+Then move data files from ```/data``` (Where Java generates it) to ```/python/data/grupos``` (ml1m, ft, anime).
+
+Now you are ready to import the datasets and run the code.
 
 ```
 $ python
@@ -70,8 +72,8 @@ $ python
 Python 3.8.5 | packaged by conda-forge | (default, Jun 24 2021, 16:55:52)
 [GCC 7.5.0] on linux
 Type "help", "copyright", "credits" or "license" for more information.
->>> import data_datasets
->>> dataset = data_datasets.DatasetML1M()
+>>> import src.data.data
+>>> dataset = src.data.data.GroupDataML1M()
 >>> print(dataset.info())
 DS: ml1m
 Train rows: 900188
